@@ -1,0 +1,67 @@
+{
+  "name": "长征主题 · 显像管特效",
+  "version": "1.1",
+  "themeId": "changzheng",
+  "sourcePackage": "czthm-1/pkg-12",
+  "colorScheme": "dark",
+  "palette": {
+    "bg": "#0c0000",
+    "brand": "#e60012",
+    "accent": "#ffd700",
+    "sidebarFill": "#110202"
+  },
+  "files": {
+    "host": "host.js",
+    "client": "client.js",
+    "readme": "README.md"
+  },
+  "assets": [
+    "assets/logo.png",
+    "assets/serve-the-people.png",
+    "assets/star.png",
+    "assets/write.png",
+    "assets/settings.png",
+    "assets/complete.png",
+    "assets/read.png",
+    "assets/error.png",
+    "assets/thinking.png",
+    "assets/redo.png",
+    "assets/新分支.png",
+    "assets/new.png"
+  ],
+  "iconMap": {
+    "logo": "assets/logo.png",
+    "serve": "assets/serve-the-people.png",
+    "star": "assets/star.png",
+    "write": "assets/write.png",
+    "settings": "assets/settings.png",
+    "complete": "assets/complete.png",
+    "read": "assets/read.png",
+    "error": "assets/error.png",
+    "thinking": "assets/thinking.png",
+    "redo": "assets/redo.png",
+    "fork": "assets/新分支.png",
+    "sparkle": "assets/new.png"
+  },
+  "features": [
+    "主题门控：样式与 UI 仅在 changzheng 激活时生效，切换回原生主题完全还原",
+    "独立主题：设置-常规-长征主题·黑红 一键启用/停用",
+    "蓝→红：DeepSeek 蓝色板重映射为红色系",
+    "全控件直角：border-radius 0",
+    "logo.png 112px 居中直贴侧栏顶部",
+    "hero：128px 放射红星 + 为人民服务横幅（隐藏原标语）",
+    "顶部信息栏：显像管 CRT 开关 + 小贴士弹窗",
+    "图标应用：star=new 文件夹图标 / settings=设置 / new=新建 / 新分支=分叉 / read=读取 / write=写入 / thinking·complete·error=工具状态",
+    "主题化工具卡片（read/glob/grep/read_image/write/edit/todo_write）",
+    "「深度求索中...」→「为人民服务中...」",
+    "全屏 CRT 扫描线/荫罩/滚纹/暗角特效（顶栏开关）",
+    "黑色控件红色泛光描边",
+    "底部「新建会话」与头部「分叉」动作"
+  ],
+  "notes": [
+    "主题切换状态为内存态，刷新页面回落到持久化偏好；切换浅色/深色时全部主题 UI 卸载，仅设置行保留",
+    "类名选择器依赖 CSS-module [hash]_[local] 命名，目标版本组件类名变化时对应规则失效",
+    "redo.png 暂无扩展点（仅图览展示）",
+    "新环境部署需先 cordis_define（host.js+client.js）再 cordis_run 并批准"
+  ]
+}
