@@ -1,8 +1,8 @@
 {
   "name": "长征主题 · 显像管特效",
-  "version": "1.6",
+  "version": "1.7",
   "themeId": "changzheng",
-  "sourcePackage": "czthm-1/pkg-1 (V1.6 rebuild)",
+  "sourcePackage": "czthm-1/pkg-1 (V1.7 rebuild)",
   "colorScheme": "dark",
   "palette": {
     "bg": "#0c0000",
@@ -49,7 +49,8 @@
     "主题门控：body:is([data-ds-theme=\"changzheng\"], [style*=\"--cz-changzheng-active\"]) 同时兼容新版内置主题与旧版标记",
     "蓝→红：DeepSeek 蓝色板重映射为红色系",
     "全控件直角：border-radius 0",
-    "logo.png 112px 居中直贴侧栏顶部",
+    "logo.png 132px 居中直贴侧栏顶部（折叠栏 52px）",
+    "下拉菜单/浮层统一主题：role=menu / role=listbox / role=tooltip 与工作区悬浮卡均为黑红直角卡片，菜单项悬停暗红底",
     "hero：128px 放射红星 + 为人民服务横幅（隐藏原标语）",
     "顶部信息栏：显像管 CRT 主开关 + ▾ 设置菜单（刷新速度 1-10、信号干扰开关与强度 1-10）+ 小贴士弹窗",
     "信号干扰：SVG 位移映射扭曲滤镜（feTurbulence + feDisplacementMap），画面扭曲/撕裂而非抖动；强度控制位移振幅序列",

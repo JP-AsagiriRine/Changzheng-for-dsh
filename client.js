@@ -1,8 +1,14 @@
 /* ============================================================================
- * 长征主题 changzheng（V1.6 / 重建 pkg-2）—— Client 半区
+ * 长征主题 changzheng（V1.7 / 重建 pkg-3）—— Client 半区
  * ----------------------------------------------------------------------------
  * 部署方式：本文件内容整体作为 cordis_define 的 code.client 参数传入。
  * 本文件是一个纯 JS 函数体（返回 Cordis Plugin 对象），不能独立运行。
+ *
+ * V1.7 变更：
+ *   1. 侧栏 logo 放大：112px → 132px（折叠栏 46px → 52px，logoRow 132px → 148px）。
+ *   2. 下拉菜单/浮层统一主题：role=menu（分组/排序、打开方式等下拉）、role=listbox
+ *      （模型选择浮层）、role=tooltip（提示气泡）与工作区悬浮卡（_hoverContent）
+ *      统一为黑红直角卡片（黑底 + 红边 + 泛光），菜单项悬停暗红底。
  *
  * V1.6 变更：
  *   1. 显像管设置菜单：主开关旁新增 ▾ 箭头，菜单含「刷新速度」（1-10，滚纹扫描
@@ -215,12 +221,12 @@ return {
       G + ' [class*=\\'_brand\\'] { background: transparent !important; border: none !important; outline: none !important; box-shadow: none !important; }',
       G + ' [class*=\\'_brand\\']:hover { background: transparent !important; }',
       G + ' [class*=\\'_brandIdentity\\'] { height: auto !important; }',
-      G + ' [class$=\\'_logoRow\\'] { height: 132px !important; position: relative; }',
-      G + ' [class*=\\'_collapsed\\'] [class$=\\'_logoRow\\'] { height: 50px !important; }',
+      G + ' [class$=\\'_logoRow\\'] { height: 148px !important; position: relative; }',
+      G + ' [class*=\\'_collapsed\\'] [class$=\\'_logoRow\\'] { height: 60px !important; }',
       G + ' [class$=\\'_logoRow\\'] > [class*=\\'_brand\\'] { position: absolute !important; inset: 0 !important; width: 100% !important; display: inline-flex; align-items: center; justify-content: center; }',
       G + ' [class$=\\'_logoRow\\'] [class*=\\'_iconButton\\'] { position: relative !important; z-index: 2 !important; }',
-      G + ' [class*=\\'_brandMark\\'] .cz-brand-wrap, ' + G + ' [class*=\\'_brandMark\\'] .cz-brand-img { width: 112px !important; height: 112px !important; }',
-      G + ' [class$=\\'_railMark\\'] .cz-brand-wrap, ' + G + ' [class$=\\'_railMark\\'] .cz-brand-img { width: 46px !important; height: 46px !important; }',
+      G + ' [class*=\\'_brandMark\\'] .cz-brand-wrap, ' + G + ' [class*=\\'_brandMark\\'] .cz-brand-img { width: 132px !important; height: 132px !important; }',
+      G + ' [class$=\\'_railMark\\'] .cz-brand-wrap, ' + G + ' [class$=\\'_railMark\\'] .cz-brand-img { width: 52px !important; height: 52px !important; }',
       // 深度求索中... → 为人民服务中...
       G + ' [class$=\\'_turnStatus\\'] { font-size: 0 !important; }',
       G + ' [class$=\\'_turnStatus\\']::after { content: \\'为人民服务中...\\'; font-size: var(--dsh-content-font-size, 14px) !important; line-height: calc(22px + var(--dsh-content-font-delta, 0px)) !important; }',
@@ -228,7 +234,10 @@ return {
       G + ' [class$=\\'_triggerRow\\'] [class$=\\'_trigger\\'] { background: linear-gradient(180deg, #e60012 0%, #a3000d 100%) !important; border: 1px solid rgba(255, 215, 0, 0.85) !important; color: #fff !important; box-shadow: 0 0 12px rgba(230, 0, 18, 0.55) !important; }',
       G + ' [class$=\\'_triggerRow\\'] [class$=\\'_trigger\\'] * { color: #fff !important; }',
       // 全局直角
-      G + ' button, ' + G + ' input, ' + G + ' textarea, ' + G + ' select, ' + G + ' [role=\\'menuitem\\'], ' + G + ' [role=\\'option\\'], ' + G + ' [role=\\'listbox\\'], ' + G + ' [role=\\'tab\\'], ' + G + ' [role=\\'dialog\\'], ' + G + ' [class$=\\'_triggerRow\\'] [class$=\\'_trigger\\'], ' + G + ' [class$=\\'_newSession\\'], ' + G + ' [class$=\\'_sectionHeader\\'], ' + G + ' [data-composer-card], ' + G + ' [class$=\\'_primary\\'], ' + G + ' [class$=\\'_add\\'], .cz-tips-card, .cz-tips-close { border-radius: 0 !important; }',
+      G + ' button, ' + G + ' input, ' + G + ' textarea, ' + G + ' select, ' + G + ' [role=\\'menuitem\\'], ' + G + ' [role=\\'menu\\'], ' + G + ' [role=\\'option\\'], ' + G + ' [role=\\'listbox\\'], ' + G + ' [role=\\'tab\\'], ' + G + ' [role=\\'dialog\\'], ' + G + ' [role=\\'tooltip\\'], ' + G + ' [class$=\\'_triggerRow\\'] [class$=\\'_trigger\\'], ' + G + ' [class$=\\'_newSession\\'], ' + G + ' [class$=\\'_sectionHeader\\'], ' + G + ' [data-composer-card], ' + G + ' [class$=\\'_primary\\'], ' + G + ' [class$=\\'_add\\'], .cz-tips-card, .cz-tips-close { border-radius: 0 !important; }',
+      // 下拉菜单 / 选项浮层 / 提示气泡 / 工作区悬浮卡：统一黑红主题样式
+      G + ' [role=\\'menu\\'], ' + G + ' [role=\\'listbox\\'], ' + G + ' [role=\\'tooltip\\'], ' + G + ' [class$=\\'_card\\']:has([class$=\\'_hoverContent\\']) { background: #000 !important; border: 1px solid rgba(230, 0, 18, 0.6) !important; border-radius: 0 !important; box-shadow: 0 0 16px rgba(230, 0, 18, 0.45) !important; }',
+      G + ' [role=\\'menuitem\\']:hover, ' + G + ' [role=\\'option\\']:hover { background: rgba(70, 8, 8, 0.6) !important; }',
       // 代码块（markdown 围栏）：圆角变量归零 + 各部件显式归零
       G + ' pre, ' + G + ' code { border-radius: 0 !important; }',
       G + ' .md-code-block, ' + G + ' .md-code-block pre, ' + G + ' .md-code-block code { border-radius: 0 !important; background-color: #000 !important; }',
