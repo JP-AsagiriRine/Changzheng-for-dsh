@@ -1,8 +1,8 @@
 {
   "name": "长征主题 · 显像管特效",
-  "version": "1.5",
+  "version": "1.6",
   "themeId": "changzheng",
-  "sourcePackage": "czthm-1/pkg-1 (V1.5 rebuild)",
+  "sourcePackage": "czthm-1/pkg-1 (V1.6 rebuild)",
   "colorScheme": "dark",
   "palette": {
     "bg": "#0c0000",
@@ -44,14 +44,16 @@
     "sparkle": "assets/new.png"
   },
   "features": [
-    "外观栏四立方切换：浅色/深色/跟随系统/长征（红星），任何主题下可用（替换产品 Appearance 行）",
-    "主题注册时序容错：冲突时 400ms 重试，修复“切换按钮消失”问题",
-    "主题门控：样式与 UI 仅在 changzheng 激活时生效，切换回原生主题完全还原",
+    "外观行：由新版 dsh 内置「设置→常规→外观」的四立方切换承担（含长征·红星），插件不再替换产品 Appearance 行",
+    "主题注册容错：新版 dsh 内置 changzheng（already registered 视为成功）；旧版冲突按 400ms 最多重试 5 次",
+    "主题门控：body:is([data-ds-theme=\"changzheng\"], [style*=\"--cz-changzheng-active\"]) 同时兼容新版内置主题与旧版标记",
     "蓝→红：DeepSeek 蓝色板重映射为红色系",
     "全控件直角：border-radius 0",
     "logo.png 112px 居中直贴侧栏顶部",
     "hero：128px 放射红星 + 为人民服务横幅（隐藏原标语）",
-    "顶部信息栏：显像管 CRT 开关 + 小贴士弹窗",
+    "顶部信息栏：显像管 CRT 主开关 + ▾ 设置菜单（刷新速度 1-10、信号干扰开关与强度 1-10）+ 小贴士弹窗",
+    "信号干扰：SVG 位移映射扭曲滤镜（feTurbulence + feDisplacementMap），画面扭曲/撕裂而非抖动；强度控制位移振幅序列",
+    "刷新速度：滚纹亮条扫描周期 --cz-roll-duration（16 - 1.4*v 秒，v=1..10）",
     "图标应用：star=new 文件夹图标 / settings=设置 / new=新建 / 新分支=分叉 / read=读取 / write=写入 / thinking·complete·error=工具状态",
     "主题化工具卡片（read/glob/grep/read_image/write/edit/todo_write）",
     "「深度求索中...」→「为人民服务中...」",
@@ -60,9 +62,11 @@
     "底部「新建会话」与头部「分叉」动作"
   ],
   "notes": [
-    "主题切换状态为内存态，刷新页面回落到持久化偏好；切换浅色/深色时全部主题 UI 卸载，仅设置行保留",
+    "主题切换状态为内存态，刷新页面回落到持久化偏好；切换浅色/深色时全部主题 UI 卸载",
+    "CRT 设置（主开关/刷新速度/信号干扰/强度）为进程内状态，刷新页面后恢复默认（关、5、关、4）",
     "类名选择器依赖 CSS-module [hash]_[local] 命名，目标版本组件类名变化时对应规则失效",
     "redo.png 暂无扩展点（仅图览展示）",
+    "V1.6 面向内置 changzheng 主题的 dsh 版本（设置→外观含长征立方体）；旧版 dsh 无内置行，请保留 V1.5（外观行替换）",
     "新环境部署需先 cordis_define（host.js+client.js）再 cordis_run 并批准"
   ]
 }

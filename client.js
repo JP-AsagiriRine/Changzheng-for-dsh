@@ -1,18 +1,23 @@
 /* ============================================================================
- * 长征主题 changzheng（V1.5 / 重建 pkg-1）—— Client 半区
+ * 长征主题 changzheng（V1.6 / 重建 pkg-2）—— Client 半区
  * ----------------------------------------------------------------------------
  * 部署方式：本文件内容整体作为 cordis_define 的 code.client 参数传入。
  * 本文件是一个纯 JS 函数体（返回 Cordis Plugin 对象），不能独立运行。
  *
- * V1.5 变更：
- *   1. 主题切换并入「外观」行：设置 → 常规 的 Appearance 行替换为四个立方
- *      （浅色 / 深色 / 跟随系统 / 长征·红星），任何主题下可用；移除原独立
- *      「长征主题 · 黑红」设置行。
- *   2. 主题注册时序容错：register 冲突（旧 fiber 未注销）时 400ms 重试，
- *      修复“切换按钮消失/主题未注册”问题。
- *   3. 全部保留：主题门控（--cz-changzheng-active 标记，仅激活时生效）、
- *      112px 居中 logo、代码块/用户消息黑红直角、主题化工具卡、
- *      CRT 增强、小贴士弹窗、“为人民服务中...”等。
+ * V1.6 变更：
+ *   1. 显像管设置菜单：主开关旁新增 ▾ 箭头，菜单含「刷新速度」（1-10，滚纹扫描
+ *      周期 --cz-roll-duration = 16 - 1.4*v 秒）与「信号干扰」开关 +「强度」
+ *      （1-10，受开关门控）。
+ *   2. 信号干扰改为 SVG 位移映射滤镜（#cz-interfere-distort：feTurbulence 扭曲场
+ *      + feDisplacementMap，scale 由 0.8s 动画序列驱动，强度变化时重写序列），
+ *      画面是扭曲/撕裂而非左右抖动。
+ *   3. 门控选择器升级：body:is([data-ds-theme="changzheng"], [style*="--cz-changzheng-active"])
+ *      —— 兼容新版 dsh（内置 changzheng，presenter 写 data-ds-theme）与旧版插件
+ *      注册标记变量两种形态。
+ *   4. 主题注册容错：新版 dsh 已内置 changzheng 主题时 register 报 already registered
+ *      视为成功（颜色令牌由产品内置主题提供）；旧版冲突仍按 400ms 最多重试 5 次。
+ *   5. 外观行：V1.6 不再注册 settings.general.item 的 appearance 行——新版 dsh 的
+ *      「设置→常规→外观」已内置「长征」立方体。旧版 dsh（无内置行）请保留 V1.5。
  *
  * 向后兼容：类名规则依赖产品 CSS-module 类名（[hash]_[local] 模式）；若目标
  *   dsh 版本组件类名变化，对应 CSS 规则失效，但插槽功能与主题色不受影响。
@@ -27,6 +32,7 @@ return {
       ctx.effect(() => {
         let closed = false
         let themeDispose = null
+        let attempts = 0
         const registerTheme = function () {
           if (closed) return
           try {
@@ -52,8 +58,14 @@ return {
               },
             })
           } catch (error) {
-            const timer = ctx.get('timer')
-            if (timer !== undefined) timer.timeout(registerTheme, 400)
+            // 新版 dsh 内置 changzheng：id 冲突即视为成功（令牌由产品内置主题提供）
+            const message = String((error && error.message) || error)
+            if (message.indexOf('already registered') >= 0) return
+            if (attempts < 5) {
+              attempts += 1
+              const timer = ctx.get('timer')
+              if (timer !== undefined) timer.timeout(registerTheme, 400)
+            }
           }
         }
         registerTheme()
@@ -66,7 +78,7 @@ return {
 
     if (slots === undefined) return
 
-    const G = 'body[style*="--cz-changzheng-active"]'
+    const G = 'body:is([data-ds-theme="changzheng"], [style*="--cz-changzheng-active"])'
 
     const iconCache = new Map()
     const loadIcon = function (name) {
@@ -94,18 +106,44 @@ return {
       return src
     }
 
-    const crt = {
+    // 显像管设置：主开关 + 刷新速度 + 信号干扰（开关/强度），进程内状态
+    const crtSettings = {
+      value: { on: false, refresh: 5, interfere: false, strength: 4 },
+      listeners: new Set(),
+      getSnapshot: function () { return crtSettings.value },
+      subscribe: function (fn) {
+        crtSettings.listeners.add(fn)
+        return function () { crtSettings.listeners.delete(fn) }
+      },
+      publish: function (next) {
+        crtSettings.value = next
+        crtSettings.listeners.forEach(function (fn) { fn() })
+      },
+      toggleCrt: function () { crtSettings.publish({ ...crtSettings.value, on: !crtSettings.value.on }) },
+      setRefresh: function (v) { crtSettings.publish({ ...crtSettings.value, refresh: v }) },
+      setInterfere: function (v) { crtSettings.publish({ ...crtSettings.value, interfere: v }) },
+      setStrength: function (v) { crtSettings.publish({ ...crtSettings.value, strength: v }) },
+    }
+    const crtMenu = {
       value: false,
       listeners: new Set(),
-      getSnapshot: function () { return crt.value },
+      getSnapshot: function () { return crtMenu.value },
       subscribe: function (fn) {
-        crt.listeners.add(fn)
-        return function () { crt.listeners.delete(fn) }
+        crtMenu.listeners.add(fn)
+        return function () { crtMenu.listeners.delete(fn) }
       },
+      publish: function (next) {
+        crtMenu.value = next
+        crtMenu.listeners.forEach(function (fn) { fn() })
+      },
+      toggle: function () { crtMenu.publish(!crtMenu.value) },
+      set: function (v) { crtMenu.publish(v) },
     }
-    const toggleCrt = function () {
-      crt.value = !crt.value
-      crt.listeners.forEach(function (fn) { fn() })
+    const refreshDuration = function (v) { return (16 - 1.4 * v).toFixed(1) + 's' }
+    const interferenceScaleValues = function (v) {
+      return [0.4, 1.6, 0.6, 2.4, 0.3, 1.1, 0.5, 1.9, 0.4]
+        .map(function (f) { return (f * v).toFixed(1) })
+        .join(';')
     }
 
     const tips = {
@@ -123,9 +161,52 @@ return {
     }
     const toggleTips = function () { setTips(!tips.value) }
 
-    const activeId = {
-      getSnapshot: function () { return theme.getTheme().active.id },
-      subscribe: function (listener) { return ctx.on('theme/change', function () { listener() }) },
+    // 信号干扰扭曲滤镜：注入 0x0 SVG（feTurbulence + feDisplacementMap），
+    // 并把 CRT 设置投影到 body（--cz-roll-duration / data-cz-interfere / scale 序列）
+    if (typeof document !== 'undefined') {
+      ctx.effect(function () {
+        const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg')
+        svg.setAttribute('width', '0')
+        svg.setAttribute('height', '0')
+        svg.setAttribute('aria-hidden', 'true')
+        svg.style.position = 'absolute'
+        const filter = document.createElementNS('http://www.w3.org/2000/svg', 'filter')
+        filter.setAttribute('id', 'cz-interfere-distort')
+        const turbulence = document.createElementNS('http://www.w3.org/2000/svg', 'feTurbulence')
+        turbulence.setAttribute('type', 'fractalNoise')
+        turbulence.setAttribute('baseFrequency', '0.012 0.11')
+        turbulence.setAttribute('numOctaves', '2')
+        turbulence.setAttribute('seed', '11')
+        turbulence.setAttribute('result', 'warp')
+        const displacement = document.createElementNS('http://www.w3.org/2000/svg', 'feDisplacementMap')
+        displacement.setAttribute('in', 'SourceGraphic')
+        displacement.setAttribute('in2', 'warp')
+        displacement.setAttribute('xChannelSelector', 'R')
+        displacement.setAttribute('yChannelSelector', 'G')
+        const scale = document.createElementNS('http://www.w3.org/2000/svg', 'animate')
+        scale.setAttribute('attributeName', 'scale')
+        scale.setAttribute('dur', '0.8s')
+        scale.setAttribute('repeatCount', 'indefinite')
+        displacement.appendChild(scale)
+        filter.appendChild(turbulence)
+        filter.appendChild(displacement)
+        svg.appendChild(filter)
+        document.body.appendChild(svg)
+
+        const applyCrt = function (settings) {
+          document.body.style.setProperty('--cz-roll-duration', refreshDuration(settings.refresh))
+          document.body.toggleAttribute('data-cz-interfere', settings.on && settings.interfere)
+          scale.setAttribute('values', interferenceScaleValues(settings.strength))
+        }
+        applyCrt(crtSettings.getSnapshot())
+        const off = crtSettings.subscribe(function () { applyCrt(crtSettings.getSnapshot()) })
+        return function () {
+          off()
+          document.body.style.removeProperty('--cz-roll-duration')
+          document.body.removeAttribute('data-cz-interfere')
+          svg.remove()
+        }
+      }, 'changzheng: CRT filter/variables')
     }
 
     ctx.effect(() => styles.insert([
@@ -196,19 +277,11 @@ return {
       G + ' { --dsw-static-deepseek-50: rgb(38, 9, 9); --dsw-static-deepseek-100: rgb(58, 14, 14); --dsw-static-deepseek-200: rgb(88, 18, 18); --dsw-static-deepseek-300: rgb(140, 26, 26); --dsw-static-deepseek-400: rgb(255, 70, 70); --dsw-static-deepseek-450: rgb(255, 52, 52); --dsw-static-deepseek-500: rgb(230, 0, 18); --dsw-static-deepseek-600: rgb(180, 8, 20); --dsw-static-deepseek-700-delete: rgb(125, 8, 16); --dsw-static-deepseek-800: rgb(95, 16, 20); --dsw-static-deepseek-900: rgb(65, 12, 16); }',
       // 黑色控件红色泛光
       G + ' button, ' + G + ' select, ' + G + ' [role=\\'menuitem\\'], ' + G + ' [role=\\'option\\'], ' + G + ' [role=\\'listbox\\'], ' + G + ' [role=\\'tab\\'] { outline: 1px solid rgba(230, 0, 18, 0.5); outline-offset: 1px; box-shadow: 0 0 9px rgba(230, 0, 18, 0.3); }',
-      // 外观行（始终可见，任何主题下都能切换；含浅色/深色/跟随系统/长征）
-      '.cz-appear-group { display: flex; flex-direction: column; gap: 8px; }',
-      '.cz-appear-title { color: var(--dsw-alias-label-primary, inherit); font-size: 13px; font-weight: 600; }',
-      '.cz-appear-row { display: flex; gap: 8px; flex-wrap: wrap; }',
-      '.cz-appear-cube { display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; border: 1px solid var(--dsw-alias-border-l1, rgba(128, 128, 128, 0.4)); border-radius: 0; background: var(--dsw-alias-bg-layer-1, transparent); color: var(--dsw-alias-label-primary, inherit); font-size: 12px; line-height: 1.4; cursor: pointer; }',
-      '.cz-appear-cube:hover { border-color: rgba(230, 0, 18, 0.6); }',
-      '.cz-appear-cube.on { background: linear-gradient(180deg, #e60012 0%, #a3000d 100%); color: #fff !important; border-color: #ffd700; box-shadow: 0 0 10px rgba(230, 0, 18, 0.5); }',
-      '.cz-appear-cube img { width: 16px; height: 16px; object-fit: contain; }',
       // 显像管滤波层（增强）
       G + ' .cz-crt-layer { position: fixed; inset: 0; overflow: hidden; z-index: 40; pointer-events: none; backdrop-filter: contrast(1.07) saturate(1.1) brightness(1.02); animation: cz-on 0.4s ease-out, cz-flick 3.6s 0.4s infinite; }',
       G + ' .cz-crt-scan { position: absolute; inset: -10px; background: repeating-linear-gradient(to bottom, rgba(0, 0, 0, 0.34) 0px, rgba(0, 0, 0, 0.34) 1px, rgba(0, 0, 0, 0) 1px, rgba(0, 0, 0, 0) 2.6px); mix-blend-mode: multiply; }',
       G + ' .cz-crt-aperture { position: absolute; inset: 0; background: repeating-linear-gradient(to right, rgba(255, 0, 0, 0.06) 0px, rgba(255, 0, 0, 0.06) 1px, rgba(0, 255, 0, 0.05) 1px, rgba(0, 255, 0, 0.05) 2px, rgba(0, 0, 255, 0.06) 2px, rgba(0, 0, 255, 0.06) 3px); }',
-      G + ' .cz-crt-roll { position: absolute; left: 0; right: 0; top: -25%; height: 24%; background: linear-gradient(to bottom, rgba(255, 255, 255, 0) 0%, rgba(255, 255, 255, 0.08) 45%, rgba(255, 255, 255, 0.12) 55%, rgba(255, 255, 255, 0) 100%); animation: cz-roll 8.5s linear infinite; }',
+      G + ' .cz-crt-roll { position: absolute; left: 0; right: 0; top: -25%; height: 24%; background: linear-gradient(to bottom, rgba(255, 255, 255, 0) 0%, rgba(255, 255, 255, 0.08) 45%, rgba(255, 255, 255, 0.12) 55%, rgba(255, 255, 255, 0) 100%); animation: cz-roll var(--cz-roll-duration, 8.5s) linear infinite; }',
       G + ' .cz-crt-vignette { position: absolute; inset: 0; background: radial-gradient(ellipse at 50% 50%, rgba(0, 0, 0, 0) 46%, rgba(0, 0, 0, 0.5) 86%, rgba(0, 0, 0, 0.68) 100%); }',
       // 顶部信息栏显像管按钮
       G + ' .cz-hbtn { display: inline-flex; align-items: center; gap: 5px; padding: 3px 9px; border-radius: 0; border: 1px solid rgba(230, 0, 18, 0.75); background: rgba(18, 0, 0, 0.85); color: #ffd0c6; font-size: 11px; line-height: 1.4; cursor: pointer; box-shadow: 0 0 8px rgba(230, 0, 18, 0.4); }',
@@ -216,8 +289,24 @@ return {
       G + ' .cz-hbtn.on { border-color: #ffd700; color: #ffe9c2; box-shadow: 0 0 12px rgba(230, 0, 18, 0.75); }',
       G + ' .cz-hbtn-icon { width: 15px; height: 15px; display: inline-flex; align-items: center; justify-content: center; }',
       G + ' .cz-hbtn-icon img { width: 15px; height: 15px; object-fit: contain; }',
-      G + ' .cz-hbtn-icon span { color: #ffd700; font-size: 12px; line-height: 1; }',
       G + ' .cz-hbtn-text { white-space: nowrap; }',
+      // 显像管设置菜单（刷新速度 / 信号干扰开关与强度）
+      G + ' .cz-crt-control { position: relative; display: inline-flex; align-items: stretch; }',
+      G + ' .cz-hbtn-caret { padding: 3px 6px; border-left: none !important; }',
+      G + ' .cz-crt-menu-backdrop { position: fixed; inset: 0; z-index: 55; background: rgba(0, 0, 0, 0.12); }',
+      G + ' .cz-crt-menu { position: absolute; top: calc(100% + 6px); right: 0; z-index: 60; width: 236px; padding: 12px; display: flex; flex-direction: column; gap: 12px; background: #000; border: 1px solid rgba(230, 0, 18, 0.65); border-radius: 0; box-shadow: 0 0 18px rgba(230, 0, 18, 0.5); color: #f6ecec; }',
+      G + ' .cz-crt-menu-title { font-size: 12px; font-weight: 700; color: #ffd700; letter-spacing: 0.08em; }',
+      G + ' .cz-crt-menu-row { display: flex; flex-direction: column; gap: 4px; }',
+      G + ' .cz-crt-menu-label { display: flex; align-items: center; justify-content: space-between; gap: 8px; font-size: 12px; line-height: 1.4; color: #f6ecec; }',
+      G + ' .cz-crt-menu-value { color: #ffd700; font-size: 11px; }',
+      G + ' .cz-crt-menu input[type=\\'range\\'] { width: 100%; margin: 0; accent-color: #e60012; }',
+      G + ' .cz-crt-menu input[type=\\'range\\']:disabled { opacity: 0.35; }',
+      G + ' .cz-crt-switch { display: inline-flex; align-items: center; justify-content: space-between; gap: 8px; width: 100%; padding: 5px 10px; border: 1px solid rgba(230, 0, 18, 0.55); border-radius: 0; background: rgba(18, 0, 0, 0.85); color: #f6ecec; font-size: 12px; line-height: 1.4; cursor: pointer; }',
+      G + ' .cz-crt-switch.on { border-color: #ffd700; color: #fff; box-shadow: 0 0 8px rgba(230, 0, 18, 0.45); }',
+      G + ' .cz-crt-switch-dot { width: 8px; height: 8px; border-radius: 50%; background: rgba(200, 160, 160, 0.5); }',
+      G + ' .cz-crt-switch.on .cz-crt-switch-dot { background: #e60012; box-shadow: 0 0 6px rgba(230, 0, 18, 0.8); }',
+      // 信号干扰：SVG 位移映射扭曲滤镜（画面扭曲而非抖动）
+      G + '[data-cz-interfere] { filter: url(#cz-interfere-distort); }',
       // 侧栏底部动作与头部动作
       G + ' .cz-side-action { display: inline-flex; align-items: center; gap: 6px; padding: 4px 8px; border: none; background: transparent; color: #e8d6d0; font-size: 12px; cursor: pointer; border-radius: 0; }',
       G + ' .cz-side-action:hover { background: rgba(70, 8, 8, 0.6); color: #ffd700; }',
@@ -258,8 +347,9 @@ return {
         slogan ? React.createElement('img', { className: 'cz-hero-slogan', src: slogan, alt: '为人民服务', style: { width: '256px', maxWidth: '70vw', height: 'auto' } }) : null
       )
     }
+
     function CrtFilterLayer(props) {
-      const on = props.useCrtOn(function (v) { return v })
+      const on = props.useCrtSettings(function (s) { return s.on })
       if (!on) return null
       return React.createElement('div', { className: 'cz-crt-layer' },
         React.createElement('div', { className: 'cz-crt-scan' }),
@@ -268,21 +358,93 @@ return {
         React.createElement('div', { className: 'cz-crt-vignette' })
       )
     }
+    function SettingsMenuPanel(props) {
+      const settings = props.useCrtSettings(function (s) { return s })
+      return React.createElement(React.Fragment, null,
+        React.createElement('div', { className: 'cz-crt-menu-backdrop', onClick: props.closeMenu }),
+        React.createElement('div', {
+          className: 'cz-crt-menu',
+          role: 'dialog',
+          'aria-label': '显像管设置',
+          tabIndex: -1,
+          autoFocus: true,
+          onKeyDown: function (e) { if (e.key === 'Escape') props.closeMenu() },
+        },
+          React.createElement('div', { className: 'cz-crt-menu-title' }, '显像管设置'),
+          React.createElement('label', { className: 'cz-crt-menu-row' },
+            React.createElement('span', { className: 'cz-crt-menu-label' },
+              React.createElement('span', null, '刷新速度'),
+              React.createElement('span', { className: 'cz-crt-menu-value' }, String(settings.refresh))
+            ),
+            React.createElement('input', {
+              type: 'range', min: 1, max: 10, step: 1, value: settings.refresh,
+              'aria-label': '刷新速度',
+              onChange: function (e) { props.setRefresh(Number(e.target.value)) },
+            })
+          ),
+          React.createElement('div', { className: 'cz-crt-menu-row' },
+            React.createElement('button', {
+              type: 'button', role: 'switch',
+              'aria-checked': settings.interfere,
+              'aria-label': '开启或关闭信号干扰',
+              className: settings.interfere ? 'cz-crt-switch on' : 'cz-crt-switch',
+              onClick: function () { props.setInterfere(!settings.interfere) },
+            },
+              React.createElement('span', null, '信号干扰'),
+              React.createElement('span', { className: 'cz-crt-switch-dot', 'aria-hidden': true })
+            )
+          ),
+          React.createElement('label', { className: 'cz-crt-menu-row' },
+            React.createElement('span', { className: 'cz-crt-menu-label' },
+              React.createElement('span', null, '强度'),
+              React.createElement('span', { className: 'cz-crt-menu-value' }, String(settings.strength))
+            ),
+            React.createElement('input', {
+              type: 'range', min: 1, max: 10, step: 1, value: settings.strength,
+              disabled: !settings.interfere,
+              'aria-label': '强度',
+              onChange: function (e) { props.setStrength(Number(e.target.value)) },
+            })
+          )
+        )
+      )
+    }
     function CrtToggle(props) {
-      const on = props.useCrtOn(function (v) { return v })
+      const settings = props.useCrtSettings(function (s) { return s })
+      const menuOn = props.useCrtMenuOn(function (v) { return v })
       const star = useIcon('star')
-      return React.createElement('button', {
-        type: 'button',
-        className: on ? 'cz-hbtn on' : 'cz-hbtn',
-        onClick: props.toggleCrt,
-        'aria-pressed': on,
-        'aria-label': on ? '关闭显像管电视滤波特效' : '开启显像管电视滤波特效',
-        title: on ? '显像管电视滤波：开（点击关闭）' : '显像管电视滤波：关（点击开启）',
-      },
-        React.createElement('span', { className: 'cz-hbtn-icon' },
-          star ? React.createElement('img', { src: star, alt: '' }) : React.createElement('span', null, '★')
+      const label = settings.on ? '关闭显像管电视滤波特效' : '开启显像管电视滤波特效'
+      return React.createElement('span', { className: 'cz-crt-control' },
+        React.createElement('button', {
+          type: 'button',
+          className: settings.on ? 'cz-hbtn on' : 'cz-hbtn',
+          onClick: props.toggleCrt,
+          'aria-pressed': settings.on,
+          'aria-label': label,
+          title: label,
+        },
+          React.createElement('span', { className: 'cz-hbtn-icon' },
+            star ? React.createElement('img', { src: star, alt: '' }) : React.createElement('span', null, '★')
+          ),
+          React.createElement('span', { className: 'cz-hbtn-text' }, '显像管')
         ),
-        React.createElement('span', { className: 'cz-hbtn-text' }, '显像管')
+        React.createElement('button', {
+          type: 'button',
+          className: menuOn ? 'cz-hbtn cz-hbtn-caret on' : 'cz-hbtn cz-hbtn-caret',
+          onClick: props.toggleMenu,
+          'aria-expanded': menuOn,
+          'aria-label': '打开显像管设置',
+          title: '打开显像管设置',
+        },
+          React.createElement('span', { 'aria-hidden': true }, '▾')
+        ),
+        menuOn ? React.createElement(SettingsMenuPanel, {
+          useCrtSettings: props.useCrtSettings,
+          closeMenu: props.closeMenu,
+          setRefresh: props.setRefresh,
+          setInterfere: props.setInterfere,
+          setStrength: props.setStrength,
+        }) : null
       )
     }
     function TipsButton(props) {
@@ -305,35 +467,6 @@ return {
           React.createElement('div', { className: 'cz-tips-line' }, '2.欲速则不达'),
           React.createElement('div', { className: 'cz-tips-line' }, '3.人心齐，泰山移'),
           React.createElement('button', { type: 'button', className: 'cz-tips-close', onClick: function () { props.closeTips() } }, '关闭')
-        )
-      )
-    }
-
-    // 外观行：浅色 / 深色 / 跟随系统 / 长征主题（始终可见，替换产品 Appearance 行）
-    function AppearanceRow(props) {
-      const active = props.useThemeActive(function (id) { return id })
-      const star = useIcon('star')
-      const cubes = [
-        { id: 'light', label: '浅色' },
-        { id: 'dark', label: '深色' },
-        { id: 'system', label: '跟随系统' },
-        { id: 'changzheng', label: '长征', icon: star },
-      ]
-      return React.createElement('div', { className: 'cz-appear-group' },
-        React.createElement('div', { className: 'cz-appear-title' }, '外观'),
-        React.createElement('div', { className: 'cz-appear-row' },
-          cubes.map(function (cube) {
-            return React.createElement('button', {
-              key: cube.id,
-              type: 'button',
-              className: active === cube.id ? 'cz-appear-cube on' : 'cz-appear-cube',
-              'aria-pressed': active === cube.id,
-              onClick: function () { props.setTheme(cube.id) },
-            },
-              cube.icon ? React.createElement('img', { src: cube.icon, alt: '' }) : null,
-              React.createElement('span', null, cube.label)
-            )
-          })
         )
       )
     }
@@ -419,7 +552,7 @@ return {
       d.push(slots.inject('conversation.hero.brand.mark', () => slots.register({ name: 'conversation.hero.brand.mark' }, HeroMark)))
       d.push(slots.inject('shell.overlay', () => slots.register({
         name: 'shell.overlay', id: 'changzheng-crt-filter', order: 50,
-        inject: function () { return { toggleCrt: toggleCrt, hooks: { crtOn: crt } } },
+        inject: function () { return { hooks: { crtSettings: crtSettings } } },
       }, CrtFilterLayer)))
       d.push(slots.inject('shell.overlay', () => slots.register({
         name: 'shell.overlay', id: 'changzheng-tips-modal', order: 60,
@@ -432,7 +565,17 @@ return {
       }, TipsModal)))
       d.push(slots.inject('conversation.session.header.utilities', () => slots.register({
         name: 'conversation.session.header.utilities', id: 'changzheng-crt', order: 10,
-        inject: function () { return { toggleCrt: toggleCrt, hooks: { crtOn: crt } } },
+        inject: function () {
+          return {
+            toggleCrt: crtSettings.toggleCrt,
+            toggleMenu: crtMenu.toggle,
+            closeMenu: function () { crtMenu.set(false) },
+            setRefresh: crtSettings.setRefresh,
+            setInterfere: crtSettings.setInterfere,
+            setStrength: crtSettings.setStrength,
+            hooks: { crtSettings: crtSettings, crtMenuOn: crtMenu },
+          }
+        },
       }, CrtToggle)))
       d.push(slots.inject('conversation.session.header.utilities', () => slots.register({
         name: 'conversation.session.header.utilities', id: 'changzheng-tips', order: 11,
@@ -512,13 +655,5 @@ return {
     }
     syncTheme(theme.getTheme())
     ctx.on('theme/change', syncTheme)
-
-    // 外观行：始终注册（浅色/深色/跟随系统/长征 一键切换）
-    slots.inject('settings.general.item', () => slots.register({
-      name: 'settings.general.item', id: 'appearance', order: 10,
-      inject: function () {
-        return { setTheme: function (id) { theme.setTheme(id) }, hooks: { themeActive: activeId } }
-      },
-    }, AppearanceRow))
   },
 }
