@@ -1,17 +1,30 @@
 /* ============================================================================
- * 长征主题 changzheng（V1.3 / 重建 pkg-1）—�?Client 半区
+ * 长征主题 changzheng（V1.5 / 重建 pkg-1）—— Client 半区
  * ----------------------------------------------------------------------------
- * 部署方式：本文件内容整体作为 cordis_define �?code.client 参数传入�? * 本文件是一个纯 JS 函数体（返回 Cordis Plugin 对象），不能独立运行�? *
- * V1.5 变更�? *   1. 主题切换并入「外观」行：设�?�?常规 �?Appearance 行替换为四个立方
- *      （浅�?/ 深色 / 跟随系统 / 长征·红星），任何主题下可用；移除原独�? *      「长征主�?· 黑红」设置行�? *   2. 主题注册时序容错：register 冲突（旧 fiber 未注销）时 400ms 重试�? *      修复“切换按钮消�?主题未注册”问题�? *   3. 全部保留：主题门控（--cz-changzheng-active 标记，仅激活时生效）�? *      112px 居中 logo、代码块/用户消息黑红直角、主题化工具卡�? *      CRT 增强、小贴士弹窗、“为人民服务�?..”等�? *
- * 向后兼容：类名规则依赖产�?CSS-module 类名（[hash]_[local] 模式）；若目�? *   dsh 版本组件类名变化，对�?CSS 规则失效，但插槽功能与主题色不受影响�? * ========================================================================== */
+ * 部署方式：本文件内容整体作为 cordis_define 的 code.client 参数传入。
+ * 本文件是一个纯 JS 函数体（返回 Cordis Plugin 对象），不能独立运行。
+ *
+ * V1.5 变更：
+ *   1. 主题切换并入「外观」行：设置 → 常规 的 Appearance 行替换为四个立方
+ *      （浅色 / 深色 / 跟随系统 / 长征·红星），任何主题下可用；移除原独立
+ *      「长征主题 · 黑红」设置行。
+ *   2. 主题注册时序容错：register 冲突（旧 fiber 未注销）时 400ms 重试，
+ *      修复“切换按钮消失/主题未注册”问题。
+ *   3. 全部保留：主题门控（--cz-changzheng-active 标记，仅激活时生效）、
+ *      112px 居中 logo、代码块/用户消息黑红直角、主题化工具卡、
+ *      CRT 增强、小贴士弹窗、“为人民服务中...”等。
+ *
+ * 向后兼容：类名规则依赖产品 CSS-module 类名（[hash]_[local] 模式）；若目标
+ *   dsh 版本组件类名变化，对应 CSS 规则失效，但插槽功能与主题色不受影响。
+ * ========================================================================== */
 return {
   apply(ctx) {
     const theme = ctx.get('theme')
     const slots = ctx.get('slots')
 
     if (theme !== undefined) {
-      // 注册主题（时序容错：更新时旧 fiber 注销可能尚未完成，register 抛“already registered”，稍后重试�?      ctx.effect(() => {
+      // 注册主题（时序容错：更新时旧 fiber 注销可能尚未完成，register 抛“already registered”，稍后重试）
+      ctx.effect(() => {
         let closed = false
         let themeDispose = null
         const registerTheme = function () {
@@ -34,7 +47,8 @@ return {
                 '--dsw-alias-state-success-primary': '#4fbf4f',
                 '--dsw-alias-state-warn-primary': '#e0b400',
                 '--dsw-specific-sidebar-fill': '#110202',
-                // 主题激活标记：仅当 changzheng 激活时�?presenter 内联�?body，用于门控全部样�?                '--cz-changzheng-active': '1',
+                // 主题激活标记：仅当 changzheng 激活时由 presenter 内联到 body，用于门控全部样式
+                '--cz-changzheng-active': '1',
               },
             })
           } catch (error) {
@@ -115,7 +129,7 @@ return {
     }
 
     ctx.effect(() => styles.insert([
-      // logo：居�?112px 直贴
+      // logo：居中 112px 直贴
       G + ' .cz-brand-mark { filter: drop-shadow(0 0 8px rgba(230, 0, 18, 0.6)); }',
       G + ' [class*=\\'_brand\\'] { background: transparent !important; border: none !important; outline: none !important; box-shadow: none !important; }',
       G + ' [class*=\\'_brand\\']:hover { background: transparent !important; }',
@@ -126,22 +140,24 @@ return {
       G + ' [class$=\\'_logoRow\\'] [class*=\\'_iconButton\\'] { position: relative !important; z-index: 2 !important; }',
       G + ' [class*=\\'_brandMark\\'] .cz-brand-wrap, ' + G + ' [class*=\\'_brandMark\\'] .cz-brand-img { width: 112px !important; height: 112px !important; }',
       G + ' [class$=\\'_railMark\\'] .cz-brand-wrap, ' + G + ' [class$=\\'_railMark\\'] .cz-brand-img { width: 46px !important; height: 46px !important; }',
-      // 深度求索�?.. �?为人民服务中...
+      // 深度求索中... → 为人民服务中...
       G + ' [class$=\\'_turnStatus\\'] { font-size: 0 !important; }',
       G + ' [class$=\\'_turnStatus\\']::after { content: \\'为人民服务中...\\'; font-size: var(--dsh-content-font-size, 14px) !important; line-height: calc(22px + var(--dsh-content-font-delta, 0px)) !important; }',
-      // 设置控件：红�?+ 直角
+      // 设置控件：红色 + 直角
       G + ' [class$=\\'_triggerRow\\'] [class$=\\'_trigger\\'] { background: linear-gradient(180deg, #e60012 0%, #a3000d 100%) !important; border: 1px solid rgba(255, 215, 0, 0.85) !important; color: #fff !important; box-shadow: 0 0 12px rgba(230, 0, 18, 0.55) !important; }',
       G + ' [class$=\\'_triggerRow\\'] [class$=\\'_trigger\\'] * { color: #fff !important; }',
       // 全局直角
       G + ' button, ' + G + ' input, ' + G + ' textarea, ' + G + ' select, ' + G + ' [role=\\'menuitem\\'], ' + G + ' [role=\\'option\\'], ' + G + ' [role=\\'listbox\\'], ' + G + ' [role=\\'tab\\'], ' + G + ' [role=\\'dialog\\'], ' + G + ' [class$=\\'_triggerRow\\'] [class$=\\'_trigger\\'], ' + G + ' [class$=\\'_newSession\\'], ' + G + ' [class$=\\'_sectionHeader\\'], ' + G + ' [data-composer-card], ' + G + ' [class$=\\'_primary\\'], ' + G + ' [class$=\\'_add\\'], .cz-tips-card, .cz-tips-close { border-radius: 0 !important; }',
-      // 代码块（markdown 围栏）：圆角变量归零 + 各部件显式归�?      G + ' pre, ' + G + ' code { border-radius: 0 !important; }',
+      // 代码块（markdown 围栏）：圆角变量归零 + 各部件显式归零
+      G + ' pre, ' + G + ' code { border-radius: 0 !important; }',
       G + ' .md-code-block, ' + G + ' .md-code-block pre, ' + G + ' .md-code-block code { border-radius: 0 !important; background-color: #000 !important; }',
       G + ' .md-code-block { --dsl-code-block-border-radius: 0 !important; border: 1px solid rgba(230, 0, 18, 0.45) !important; }',
       G + ' .md-code-block [class$=\\'_bannerWrap\\'], ' + G + ' .md-code-block [class$=\\'_banner\\'] { border-top-left-radius: 0 !important; border-top-right-radius: 0 !important; }',
       G + ' .md-code-block pre { border-bottom-left-radius: 0 !important; border-bottom-right-radius: 0 !important; }',
-      // 用户消息气泡：黑�?+ 直角
+      // 用户消息气泡：黑红 + 直角
       G + ' [class$=\\'_userRow\\'] [class$=\\'_bubble\\'] { background: #000 !important; border: 1px solid rgba(230, 0, 18, 0.55) !important; border-radius: 0 !important; color: #f6ecec !important; box-shadow: 0 0 8px rgba(230, 0, 18, 0.25) !important; }',
-      // 主题�?      G + ' [data-tool], ' + G + ' [data-variant=\\'bash\\'], ' + G + ' [data-variant=\\'think\\'], ' + G + ' [class$=\\'_card\\']:has([data-variant=\\'bash\\']) { border-radius: 0 !important; }',
+      // 主题卡
+      G + ' [data-tool], ' + G + ' [data-variant=\\'bash\\'], ' + G + ' [data-variant=\\'think\\'], ' + G + ' [class$=\\'_card\\']:has([data-variant=\\'bash\\']) { border-radius: 0 !important; }',
       G + ' [data-tool] [class$=\\'_title\\'], ' + G + ' [data-variant=\\'bash\\'] [class$=\\'_title\\'], ' + G + ' [data-variant=\\'think\\'] [class$=\\'_title\\'], ' + G + ' [data-disclosure-row]:has([data-context-source]) [class$=\\'_title\\'] { color: #e60012 !important; font-weight: 700 !important; }',
       G + ' [data-tool] [class$=\\'_leading\\'] svg, ' + G + ' [data-variant=\\'bash\\'] [class$=\\'_leading\\'] svg, ' + G + ' [data-variant=\\'think\\'] [class$=\\'_leading\\'] svg, ' + G + ' [data-disclosure-row]:has([data-context-source]) [class$=\\'_leading\\'] svg { display: none !important; }',
       G + ' [data-tool] [class$=\\'_leading\\'], ' + G + ' [data-variant=\\'bash\\'] [class$=\\'_leading\\'], ' + G + ' [data-variant=\\'think\\'] [class$=\\'_leading\\'], ' + G + ' [data-disclosure-row]:has([data-context-source]) [class$=\\'_leading\\'] { background-size: 16px 16px; background-position: center; background-repeat: no-repeat; }',
@@ -174,11 +190,14 @@ return {
       // 工作区行红色
       G + ' [class$=\\'_sectionHeader\\'] { background: linear-gradient(180deg, #e60012 0%, #a3000d 100%) !important; border: 1px solid rgba(255, 215, 0, 0.8) !important; color: #fff !important; box-shadow: 0 0 10px rgba(230, 0, 18, 0.55) !important; }',
       G + ' [class$=\\'_sectionHeader\\'] * { color: #fff !important; }',
-      // 新会话按钮红�?      G + ' [class$=\\'_newSession\\'] { background: linear-gradient(180deg, #e60012 0%, #a3000d 100%) !important; border: 1px solid rgba(255, 215, 0, 0.85) !important; color: #fff !important; box-shadow: 0 0 12px rgba(230, 0, 18, 0.55) !important; }',
-      // �?�?�?      G + ' { --dsw-static-deepseek-50: rgb(38, 9, 9); --dsw-static-deepseek-100: rgb(58, 14, 14); --dsw-static-deepseek-200: rgb(88, 18, 18); --dsw-static-deepseek-300: rgb(140, 26, 26); --dsw-static-deepseek-400: rgb(255, 70, 70); --dsw-static-deepseek-450: rgb(255, 52, 52); --dsw-static-deepseek-500: rgb(230, 0, 18); --dsw-static-deepseek-600: rgb(180, 8, 20); --dsw-static-deepseek-700-delete: rgb(125, 8, 16); --dsw-static-deepseek-800: rgb(95, 16, 20); --dsw-static-deepseek-900: rgb(65, 12, 16); }',
+      // 新会话按钮红色
+      G + ' [class$=\\'_newSession\\'] { background: linear-gradient(180deg, #e60012 0%, #a3000d 100%) !important; border: 1px solid rgba(255, 215, 0, 0.85) !important; color: #fff !important; box-shadow: 0 0 12px rgba(230, 0, 18, 0.55) !important; }',
+      // 蓝 → 红
+      G + ' { --dsw-static-deepseek-50: rgb(38, 9, 9); --dsw-static-deepseek-100: rgb(58, 14, 14); --dsw-static-deepseek-200: rgb(88, 18, 18); --dsw-static-deepseek-300: rgb(140, 26, 26); --dsw-static-deepseek-400: rgb(255, 70, 70); --dsw-static-deepseek-450: rgb(255, 52, 52); --dsw-static-deepseek-500: rgb(230, 0, 18); --dsw-static-deepseek-600: rgb(180, 8, 20); --dsw-static-deepseek-700-delete: rgb(125, 8, 16); --dsw-static-deepseek-800: rgb(95, 16, 20); --dsw-static-deepseek-900: rgb(65, 12, 16); }',
       // 黑色控件红色泛光
       G + ' button, ' + G + ' select, ' + G + ' [role=\\'menuitem\\'], ' + G + ' [role=\\'option\\'], ' + G + ' [role=\\'listbox\\'], ' + G + ' [role=\\'tab\\'] { outline: 1px solid rgba(230, 0, 18, 0.5); outline-offset: 1px; box-shadow: 0 0 9px rgba(230, 0, 18, 0.3); }',
-      // 外观行（始终可见，任何主题下都能切换；含浅色/深色/跟随系统/长征�?      '.cz-appear-group { display: flex; flex-direction: column; gap: 8px; }',
+      // 外观行（始终可见，任何主题下都能切换；含浅色/深色/跟随系统/长征）
+      '.cz-appear-group { display: flex; flex-direction: column; gap: 8px; }',
       '.cz-appear-title { color: var(--dsw-alias-label-primary, inherit); font-size: 13px; font-weight: 600; }',
       '.cz-appear-row { display: flex; gap: 8px; flex-wrap: wrap; }',
       '.cz-appear-cube { display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; border: 1px solid var(--dsw-alias-border-l1, rgba(128, 128, 128, 0.4)); border-radius: 0; background: var(--dsw-alias-bg-layer-1, transparent); color: var(--dsw-alias-label-primary, inherit); font-size: 12px; line-height: 1.4; cursor: pointer; }',
@@ -199,14 +218,16 @@ return {
       G + ' .cz-hbtn-icon img { width: 15px; height: 15px; object-fit: contain; }',
       G + ' .cz-hbtn-icon span { color: #ffd700; font-size: 12px; line-height: 1; }',
       G + ' .cz-hbtn-text { white-space: nowrap; }',
-      // 侧栏底部动作与头部动�?      G + ' .cz-side-action { display: inline-flex; align-items: center; gap: 6px; padding: 4px 8px; border: none; background: transparent; color: #e8d6d0; font-size: 12px; cursor: pointer; border-radius: 0; }',
+      // 侧栏底部动作与头部动作
+      G + ' .cz-side-action { display: inline-flex; align-items: center; gap: 6px; padding: 4px 8px; border: none; background: transparent; color: #e8d6d0; font-size: 12px; cursor: pointer; border-radius: 0; }',
       G + ' .cz-side-action:hover { background: rgba(70, 8, 8, 0.6); color: #ffd700; }',
       G + ' .cz-side-action img { width: 16px; height: 16px; object-fit: contain; }',
       // 设置触发内容
       G + ' .cz-settings-trigger { display: inline-flex; align-items: center; gap: 8px; }',
       G + ' .cz-settings-trigger img { width: 18px; height: 18px; object-fit: contain; }',
       G + ' .cz-settings-trigger .cz-settings-label { color: inherit; font-size: 13px; }',
-      // 主题化工具卡�?      G + ' .cz-toolcard { border: 1px solid rgba(230, 0, 18, 0.45); border-radius: 0; background: #000; padding: 8px 10px; }',
+      // 主题化工具卡片
+      G + ' .cz-toolcard { border: 1px solid rgba(230, 0, 18, 0.45); border-radius: 0; background: #000; padding: 8px 10px; }',
       G + ' .cz-toolcard-head { display: flex; align-items: center; gap: 8px; }',
       G + ' .cz-toolcard-head img { object-fit: contain; }',
       G + ' .cz-toolcard-name { flex: 1; font-weight: 600; font-size: 12px; color: #f6ecec; }',
@@ -234,7 +255,7 @@ return {
         React.createElement('div', { className: 'cz-hero-mark', style: { width: '128px', height: '128px' } },
           star ? React.createElement('img', { className: 'cz-hero-star', src: star, alt: '', style: { width: '128px', height: '128px', objectFit: 'contain' } }) : null
         ),
-        slogan ? React.createElement('img', { className: 'cz-hero-slogan', src: slogan, alt: '为人民服�?, style: { width: '256px', maxWidth: '70vw', height: 'auto' } }) : null
+        slogan ? React.createElement('img', { className: 'cz-hero-slogan', src: slogan, alt: '为人民服务', style: { width: '256px', maxWidth: '70vw', height: 'auto' } }) : null
       )
     }
     function CrtFilterLayer(props) {
@@ -255,13 +276,13 @@ return {
         className: on ? 'cz-hbtn on' : 'cz-hbtn',
         onClick: props.toggleCrt,
         'aria-pressed': on,
-        'aria-label': on ? '关闭显像管电视滤波特�? : '开启显像管电视滤波特效',
+        'aria-label': on ? '关闭显像管电视滤波特效' : '开启显像管电视滤波特效',
         title: on ? '显像管电视滤波：开（点击关闭）' : '显像管电视滤波：关（点击开启）',
       },
         React.createElement('span', { className: 'cz-hbtn-icon' },
-          star ? React.createElement('img', { src: star, alt: '' }) : React.createElement('span', null, '�?)
+          star ? React.createElement('img', { src: star, alt: '' }) : React.createElement('span', null, '★')
         ),
-        React.createElement('span', { className: 'cz-hbtn-text' }, '显像�?)
+        React.createElement('span', { className: 'cz-hbtn-text' }, '显像管')
       )
     }
     function TipsButton(props) {
@@ -271,18 +292,18 @@ return {
         className: on ? 'cz-tips-btn on' : 'cz-tips-btn',
         onClick: props.toggleTips,
         'aria-pressed': on,
-        title: '小贴�?,
-      }, React.createElement('span', null, '小贴�?))
+        title: '小贴士',
+      }, React.createElement('span', null, '小贴士'))
     }
     function TipsModal(props) {
       const on = props.useTipsOn(function (v) { return v })
       if (!on) return null
       return React.createElement('div', { className: 'cz-tips-layer', onClick: props.closeTips },
         React.createElement('div', { className: 'cz-tips-card', onClick: function (e) { e.stopPropagation() } },
-          React.createElement('div', { className: 'cz-tips-title' }, '小贴�?),
-          React.createElement('div', { className: 'cz-tips-line' }, '1.兵贵神�?),
+          React.createElement('div', { className: 'cz-tips-title' }, '小贴士'),
+          React.createElement('div', { className: 'cz-tips-line' }, '1.兵贵神速'),
           React.createElement('div', { className: 'cz-tips-line' }, '2.欲速则不达'),
-          React.createElement('div', { className: 'cz-tips-line' }, '3.人心齐，泰山�?),
+          React.createElement('div', { className: 'cz-tips-line' }, '3.人心齐，泰山移'),
           React.createElement('button', { type: 'button', className: 'cz-tips-close', onClick: function () { props.closeTips() } }, '关闭')
         )
       )
@@ -320,7 +341,7 @@ return {
     function SettingsTrigger(props) {
       const icon = useIcon('settings')
       return React.createElement('span', { className: 'cz-settings-trigger' },
-        icon ? React.createElement('img', { src: icon, alt: '' }) : React.createElement('span', { style: { color: '#ffd700' } }, '�?),
+        icon ? React.createElement('img', { src: icon, alt: '' }) : React.createElement('span', { style: { color: '#ffd700' } }, '⚙'),
         props.wide ? React.createElement('span', { className: 'cz-settings-label' }, '设置') : null
       )
     }
@@ -332,7 +353,7 @@ return {
         onClick: props.startSession,
         title: '新建会话',
       },
-        icon ? React.createElement('img', { src: icon, alt: '' }) : React.createElement('span', null, '�?),
+        icon ? React.createElement('img', { src: icon, alt: '' }) : React.createElement('span', null, '✦'),
         props.wide ? React.createElement('span', null, '新建会话') : null
       )
     }
@@ -342,9 +363,9 @@ return {
         type: 'button',
         className: 'cz-side-action',
         onClick: function () { props.forkSession(props.sessionId) },
-        title: '以当前会话分叉出新会�?,
+        title: '以当前会话分叉出新会话',
       },
-        icon ? React.createElement('img', { src: icon, alt: '' }) : React.createElement('span', null, '�?),
+        icon ? React.createElement('img', { src: icon, alt: '' }) : React.createElement('span', null, '⑂'),
         React.createElement('span', null, '分叉')
       )
     }
@@ -373,8 +394,8 @@ return {
       const statusIcon = useIcon(status === 'thinking' ? 'thinking' : status === 'error' ? 'error' : 'complete')
       const argsRaw = settled ? (block.call ? block.call.argsRaw : '') : block.argsRaw || ''
       const body = settled ? resultText(block) : ''
-      const argsHead = argsRaw.length > 160 ? argsRaw.slice(0, 160) + '�? : argsRaw
-      const bodyHead = body.length > 900 ? body.slice(0, 900) + '�? : body
+      const argsHead = argsRaw.length > 160 ? argsRaw.slice(0, 160) + '…' : argsRaw
+      const bodyHead = body.length > 900 ? body.slice(0, 900) + '…' : body
       return React.createElement('div', { className: 'cz-toolcard' },
         React.createElement('div', { className: 'cz-toolcard-head' },
           statusIcon ? React.createElement('img', { src: statusIcon, alt: '', style: { width: '18px', height: '18px' } }) : null,
@@ -492,7 +513,7 @@ return {
     syncTheme(theme.getTheme())
     ctx.on('theme/change', syncTheme)
 
-    // 外观行：始终注册（浅�?深色/跟随系统/长征 一键切换）
+    // 外观行：始终注册（浅色/深色/跟随系统/长征 一键切换）
     slots.inject('settings.general.item', () => slots.register({
       name: 'settings.general.item', id: 'appearance', order: 10,
       inject: function () {
